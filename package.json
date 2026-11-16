@@ -1,0 +1,13 @@
+{
+  "name": "@civ-clone/base-unit-action-poison-water",
+  "version": "0.0.0",
+  "description": "The PoisonWater unit action: a Spy poisons a city's water supply, with criteria for offering it.",
+  "repository": "git@github.com:civ-clone/base-unit-action-poison-water.git",
+  "keywords": [
+    "typescript",
+    "civilization"
+  ],
+  "author": "dom111 <dom111@users.noreply.github.com>",
+  "license": "MIT",
+  "private": false
+}
