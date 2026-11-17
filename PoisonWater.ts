@@ -9,17 +9,23 @@ import Moved from '@civ-clone/core-unit/Rules/Moved';
 import Tile from '@civ-clone/core-world/Tile';
 import Unit from '@civ-clone/core-unit/Unit';
 import WaterPoisoned from './Rules/WaterPoisoned';
-import { agentSurvives } from '@civ-clone/base-unit-agent/lib/mission';
+import {
+  agentSurvives,
+  loseAgent,
+  missionMode,
+} from '@civ-clone/base-unit-agent/lib/mission';
 
 /**
  * A Spy poisons `city()`'s water supply. What that does to the city is up to the `WaterPoisoned` rules (Civ2: the city
  * shrinks by 1, or a size-1 city's food box is emptied).
  *
  * `perform()`, in order:
- * 1. the Spy must survive a caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`), or it is destroyed;
+ * 1. `MissionMode` resolves the escape mode (default `ORDINARY`; Civ2 draws 0 or 1); then the Spy must survive a
+ *    caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`): one that is caught goes to `AgentLost` and
+ *    is destroyed by the city's owner;
  * 2. the `WaterPoisoned` rules;
- * 3. `Moved`, then the Spy is used up unless it survives an `ORDINARY` check (Civ2 escapes ordinarily or hard, on a
- *    coin flip: its rule draws that itself). With no `AgentSurvives` rules, the check passes and the Spy is used up.
+ * 3. `Moved`, then the Spy is used up (`AgentLost`, then destroyed) unless it survives `AgentSurvives` with the
+ *    resolved mode. With no `AgentSurvives` rules, the check passes and the Spy is used up.
  */
 export class PoisonWater extends Action {
   protected _city: City;
@@ -58,10 +64,19 @@ export class PoisonWater extends Action {
       mission = this as unknown as Action,
       ruleRegistry = this.ruleRegistry();
 
-    if (!agentSurvives(unit, mission, CAUGHT_CHECK, ruleRegistry)) {
-      ruleRegistry.process(Moved, unit, mission);
+    const mode = missionMode(unit, mission, ORDINARY, ruleRegistry);
 
-      unit.destroy();
+    if (
+      !agentSurvives(unit, mission, CAUGHT_CHECK, ruleRegistry, undefined, mode)
+    ) {
+      loseAgent(
+        unit,
+        this._city,
+        mission,
+        true,
+        ruleRegistry,
+        this._city.player()
+      );
 
       return;
     }
@@ -70,8 +85,8 @@ export class PoisonWater extends Action {
 
     ruleRegistry.process(Moved, unit, mission);
 
-    if (!agentSurvives(unit, mission, ORDINARY, ruleRegistry)) {
-      unit.destroy();
+    if (!agentSurvives(unit, mission, mode, ruleRegistry)) {
+      loseAgent(unit, this._city, mission, false, ruleRegistry);
     }
   }
 }

@@ -63,7 +63,11 @@ const setUp = () => {
     ),
     new Destroyed(
       new Effect((destroyed: Unit, by: Player | null): void => {
-        log.push(`destroyed ${destroyed === unit} ${by}`);
+        log.push(
+          `destroyed ${destroyed === unit} ${
+            by === null ? null : by === enemy ? 'owner' : 'other'
+          }`
+        );
       })
     )
   );
@@ -121,10 +125,7 @@ describe('PoisonWater', (): void => {
       'poisoned true true true',
       'moved true true',
     ]);
-    expect(caught.log).to.deep.equal([
-      'moved true true',
-      'destroyed true null',
-    ]);
+    expect(caught.log).to.deep.equal(['destroyed true owner']);
   });
 
   it('rebuilds itself for another unit with the same city', (): void => {

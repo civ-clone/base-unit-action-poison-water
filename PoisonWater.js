@@ -12,10 +12,12 @@ const mission_1 = require("@civ-clone/base-unit-agent/lib/mission");
  * shrinks by 1, or a size-1 city's food box is emptied).
  *
  * `perform()`, in order:
- * 1. the Spy must survive a caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`), or it is destroyed;
+ * 1. `MissionMode` resolves the escape mode (default `ORDINARY`; Civ2 draws 0 or 1); then the Spy must survive a
+ *    caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`): one that is caught goes to `AgentLost` and
+ *    is destroyed by the city's owner;
  * 2. the `WaterPoisoned` rules;
- * 3. `Moved`, then the Spy is used up unless it survives an `ORDINARY` check (Civ2 escapes ordinarily or hard, on a
- *    coin flip: its rule draws that itself). With no `AgentSurvives` rules, the check passes and the Spy is used up.
+ * 3. `Moved`, then the Spy is used up (`AgentLost`, then destroyed) unless it survives `AgentSurvives` with the
+ *    resolved mode. With no `AgentSurvives` rules, the check passes and the Spy is used up.
  */
 class PoisonWater extends Action_1.default {
     constructor(from, to, unit, city, ruleRegistry = RuleRegistry_1.instance) {
@@ -33,15 +35,15 @@ class PoisonWater extends Action_1.default {
     }
     perform() {
         const unit = this.unit(), mission = this, ruleRegistry = this.ruleRegistry();
-        if (!(0, mission_1.agentSurvives)(unit, mission, escape_1.CAUGHT_CHECK, ruleRegistry)) {
-            ruleRegistry.process(Moved_1.default, unit, mission);
-            unit.destroy();
+        const mode = (0, mission_1.missionMode)(unit, mission, escape_1.ORDINARY, ruleRegistry);
+        if (!(0, mission_1.agentSurvives)(unit, mission, escape_1.CAUGHT_CHECK, ruleRegistry, undefined, mode)) {
+            (0, mission_1.loseAgent)(unit, this._city, mission, true, ruleRegistry, this._city.player());
             return;
         }
         ruleRegistry.process(WaterPoisoned_1.default, unit, this._city, this);
         ruleRegistry.process(Moved_1.default, unit, mission);
-        if (!(0, mission_1.agentSurvives)(unit, mission, escape_1.ORDINARY, ruleRegistry)) {
-            unit.destroy();
+        if (!(0, mission_1.agentSurvives)(unit, mission, mode, ruleRegistry)) {
+            (0, mission_1.loseAgent)(unit, this._city, mission, false, ruleRegistry);
         }
     }
 }

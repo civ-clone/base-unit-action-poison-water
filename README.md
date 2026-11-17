@@ -3,9 +3,11 @@
 The `PoisonWater` unit action: a Spy poisons a city's water supply, with criteria for offering it.
 
 - `PoisonWater`: `new PoisonWater(from, to, unit, city, ruleRegistry?)`. `perform()`, in order:
-  1. a caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`): a Spy that is caught is destroyed;
+  1. `MissionMode` (default `ORDINARY`), then a caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`):
+     a Spy that is caught goes to `AgentLost` and is destroyed by the city's owner;
   2. the `WaterPoisoned` rules;
-  3. `Moved`, then the Spy is used up unless it survives an `ORDINARY` check.
+  3. `Moved`, then the Spy is used up (`AgentLost`, then destroyed) unless it survives `AgentSurvives` with the
+     resolved mode; a rule that keeps it must spend its moves.
 
   With no `AgentSurvives` rules the check passes and the Spy is used up.
 - `Rules/WaterPoisoned`: `WaterPoisoned(unit, city, action)`. What the poison does is the rule set's (Civ2: the city

@@ -8,10 +8,12 @@ import Unit from '@civ-clone/core-unit/Unit';
  * shrinks by 1, or a size-1 city's food box is emptied).
  *
  * `perform()`, in order:
- * 1. the Spy must survive a caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`), or it is destroyed;
+ * 1. `MissionMode` resolves the escape mode (default `ORDINARY`; Civ2 draws 0 or 1); then the Spy must survive a
+ *    caught check (base-unit-agent's `AgentSurvives` with `CAUGHT_CHECK`): one that is caught goes to `AgentLost` and
+ *    is destroyed by the city's owner;
  * 2. the `WaterPoisoned` rules;
- * 3. `Moved`, then the Spy is used up unless it survives an `ORDINARY` check (Civ2 escapes ordinarily or hard, on a
- *    coin flip: its rule draws that itself). With no `AgentSurvives` rules, the check passes and the Spy is used up.
+ * 3. `Moved`, then the Spy is used up (`AgentLost`, then destroyed) unless it survives `AgentSurvives` with the
+ *    resolved mode. With no `AgentSurvives` rules, the check passes and the Spy is used up.
  */
 export declare class PoisonWater extends Action {
   protected _city: City;
